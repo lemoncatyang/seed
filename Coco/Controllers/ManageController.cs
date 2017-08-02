@@ -1,28 +1,76 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+
+using Coco.Services;
+using Coco.ViewModels.ManageViewModels;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Coco.Models;
-using Coco.Models.ManageViewModels;
-using Coco.Services;
 
 namespace Coco.Controllers
 {
+    using Models;
+
+    /// <summary>
+    /// The manage controller.
+    /// </summary>
     [Authorize]
     public class ManageController : Controller
     {
+        /// <summary>
+        /// The _user manager.
+        /// </summary>
         private readonly UserManager<ApplicationUser> _userManager;
+
+        /// <summary>
+        /// The _sign in manager.
+        /// </summary>
         private readonly SignInManager<ApplicationUser> _signInManager;
+
+        /// <summary>
+        /// The _external cookie scheme.
+        /// </summary>
         private readonly string _externalCookieScheme;
+
+        /// <summary>
+        /// The _email sender.
+        /// </summary>
         private readonly IEmailSender _emailSender;
+
+        /// <summary>
+        /// The _sms sender.
+        /// </summary>
         private readonly ISmsSender _smsSender;
+
+        /// <summary>
+        /// The _logger.
+        /// </summary>
         private readonly ILogger _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ManageController"/> class.
+        /// </summary>
+        /// <param name="userManager">
+        /// The user manager.
+        /// </param>
+        /// <param name="signInManager">
+        /// The sign in manager.
+        /// </param>
+        /// <param name="identityCookieOptions">
+        /// The identity cookie options.
+        /// </param>
+        /// <param name="emailSender">
+        /// The email sender.
+        /// </param>
+        /// <param name="smsSender">
+        /// The sms sender.
+        /// </param>
+        /// <param name="loggerFactory">
+        /// The logger factory.
+        /// </param>
         public ManageController(
           UserManager<ApplicationUser> userManager,
           SignInManager<ApplicationUser> signInManager,
@@ -39,8 +87,15 @@ namespace Coco.Controllers
             _logger = loggerFactory.CreateLogger<ManageController>();
         }
 
-        //
-        // GET: /Manage/Index
+        /// <summary>
+        /// The index.
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpGet]
         public async Task<IActionResult> Index(ManageMessageId? message = null)
         {
@@ -51,7 +106,7 @@ namespace Coco.Controllers
                 : message == ManageMessageId.Error ? "An error has occurred."
                 : message == ManageMessageId.AddPhoneSuccess ? "Your phone number was added."
                 : message == ManageMessageId.RemovePhoneSuccess ? "Your phone number was removed."
-                : "";
+                : string.Empty;
 
             var user = await GetCurrentUserAsync();
             if (user == null)
@@ -68,9 +123,16 @@ namespace Coco.Controllers
             };
             return View(model);
         }
-
-        //
-        // POST: /Manage/RemoveLogin
+ 
+        /// <summary>
+        /// The remove login.
+        /// </summary>
+        /// <param name="account">
+        /// The account.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveLogin(RemoveLoginViewModel account)
@@ -89,15 +151,26 @@ namespace Coco.Controllers
             return RedirectToAction(nameof(ManageLogins), new { Message = message });
         }
 
-        //
-        // GET: /Manage/AddPhoneNumber
+        /// <summary>
+        /// The add phone number.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="IActionResult"/>.
+        /// </returns>
         public IActionResult AddPhoneNumber()
         {
             return View();
         }
 
-        //
-        // POST: /Manage/AddPhoneNumber
+        /// <summary>
+        /// The add phone number.
+        /// </summary>
+        /// <param name="model">
+        /// The model.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPhoneNumber(AddPhoneNumberViewModel model)
@@ -106,6 +179,7 @@ namespace Coco.Controllers
             {
                 return View(model);
             }
+
             // Generate the token and send it
             var user = await GetCurrentUserAsync();
             if (user == null)
@@ -117,8 +191,12 @@ namespace Coco.Controllers
             return RedirectToAction(nameof(VerifyPhoneNumber), new { PhoneNumber = model.PhoneNumber });
         }
 
-        //
-        // POST: /Manage/EnableTwoFactorAuthentication
+        /// <summary>
+        /// The enable two factor authentication.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EnableTwoFactorAuthentication()
@@ -133,8 +211,12 @@ namespace Coco.Controllers
             return RedirectToAction(nameof(Index), "Manage");
         }
 
-        //
-        // POST: /Manage/DisableTwoFactorAuthentication
+        /// <summary>
+        /// The disable two factor authentication.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DisableTwoFactorAuthentication()
@@ -149,8 +231,15 @@ namespace Coco.Controllers
             return RedirectToAction(nameof(Index), "Manage");
         }
 
-        //
-        // GET: /Manage/VerifyPhoneNumber
+        /// <summary>
+        /// The verify phone number.
+        /// </summary>
+        /// <param name="phoneNumber">
+        /// The phone number.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpGet]
         public async Task<IActionResult> VerifyPhoneNumber(string phoneNumber)
         {
@@ -160,12 +249,20 @@ namespace Coco.Controllers
                 return View("Error");
             }
             var code = await _userManager.GenerateChangePhoneNumberTokenAsync(user, phoneNumber);
+
             // Send an SMS to verify the phone number
             return phoneNumber == null ? View("Error") : View(new VerifyPhoneNumberViewModel { PhoneNumber = phoneNumber });
         }
 
-        //
-        // POST: /Manage/VerifyPhoneNumber
+        /// <summary>
+        /// The verify phone number.
+        /// </summary>
+        /// <param name="model">
+        /// The model.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyPhoneNumber(VerifyPhoneNumberViewModel model)
@@ -284,7 +381,7 @@ namespace Coco.Controllers
                 message == ManageMessageId.RemoveLoginSuccess ? "The external login was removed."
                 : message == ManageMessageId.AddLoginSuccess ? "The external login was added."
                 : message == ManageMessageId.Error ? "An error has occurred."
-                : "";
+                : string.Empty;
             var user = await GetCurrentUserAsync();
             if (user == null)
             {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Coco.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -9,14 +6,26 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Coco.Data;
-using Coco.Models;
-using Coco.Services;
 
 namespace Coco
 {
+    using DataInitializer;
+
+    using Models;
+
+    using Repository;
+
+    /// <summary>
+    /// The startup.
+    /// </summary>
     public class Startup
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Startup"/> class.
+        /// </summary>
+        /// <param name="env">
+        /// The env.
+        /// </param>
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -34,9 +43,17 @@ namespace Coco
             Configuration = builder.Build();
         }
 
+        /// <summary>
+        /// Gets the configuration.
+        /// </summary>
         public IConfigurationRoot Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        /// <summary>
+        /// The configure services.
+        /// </summary>
+        /// <param name="services">
+        /// The services.
+        /// </param>
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
@@ -48,14 +65,31 @@ namespace Coco
                 .AddDefaultTokenProviders();
 
             services.AddMvc();
+            services.AddScoped<IDbInitializer, DbInitializer>();
+            services.AddScoped<IUnitOfWork<ApplicationDbContext>, UnitOfWork<ApplicationDbContext>>();
+
 
             // Add application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        /// <summary>
+        /// The configure.
+        /// </summary>
+        /// <param name="app">
+        /// The app.
+        /// </param>
+        /// <param name="env">
+        /// The env.
+        /// </param>
+        /// <param name="loggerFactory">
+        /// The logger factory.
+        /// </param>
+        /// <param name="initializer">
+        /// The initializer.
+        /// </param>
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IDbInitializer initializer)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -72,11 +106,8 @@ namespace Coco
             }
 
             app.UseStaticFiles();
-
+            initializer.Initialize();
             app.UseIdentity();
-
-            // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
-
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

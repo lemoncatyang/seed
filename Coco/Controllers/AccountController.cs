@@ -9,12 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Coco.Models;
-using Coco.Models.AccountViewModels;
 using Coco.Services;
+using Coco.ViewModels.AccountViewModels;
 
 namespace Coco.Controllers
 {
+    using Models;
+
     [Authorize]
     public class AccountController : Controller
     {
