@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Repository
 {

@@ -73,7 +73,7 @@ namespace DataInitializer
                 Email = "szhchengyang@163.com",
                 PhoneNumber = "18251165658"
             };
-            await _userManager.CreateAsync(user, "Baobao329286;");
+            await _userManager.CreateAsync(user, "Abc@123456789;");
             await _userManager.AddToRoleAsync(user, "Administrator");
         }
     }
